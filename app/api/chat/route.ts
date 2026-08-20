@@ -33,12 +33,15 @@ export async function POST(request: Request) {
     take: 40,
     select: { role: true, content: true },
   });
+  const modelHistory = history.filter(
+    (message: { role: string }) => message.role === "user" || message.role === "assistant",
+  ) as { role: "user" | "assistant"; content: string }[];
 
   const completion = await groq.chat.completions.create({
     model: "llama-3.3-70b-versatile",
     messages: [
       { role: "system", content: "You are Lumina, a thoughtful and precise AI assistant. Use markdown when it improves clarity." },
-      ...history.filter((message) => message.role === "user" || message.role === "assistant") as { role: "user" | "assistant"; content: string }[],
+      ...modelHistory,
     ],
     stream: true,
     temperature: 0.7,
