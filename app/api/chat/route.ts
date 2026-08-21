@@ -50,7 +50,7 @@ export async function POST(request: Request) {
   try {
     const groq = new Groq({ apiKey: groqApiKey });
     const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: "openai/gpt-oss-120b",
       messages: [{ role: "system", content: systemPrompt }, ...modelHistory],
       temperature: 0.6,
       max_tokens: 500,
@@ -58,8 +58,13 @@ export async function POST(request: Request) {
 
     assistantContent = completion.choices?.[0]?.message?.content ?? "";
   } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown Groq failure";
     console.error("Bike guardrail model error:", error);
-    return NextResponse.json({ error: "Bike assistant is unavailable right now. Please try again." }, { status: 503 });
+    return NextResponse.json({ error: `Bike assistant is unavailable right now. Groq rejected the request: ${message}` }, { status: 503 });
+  }
+
+  if (!assistantContent.trim()) {
+    return NextResponse.json({ error: "Bike assistant returned an empty response." }, { status: 503 });
   }
 
   if (!assistantContent.trim()) {

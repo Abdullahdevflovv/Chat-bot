@@ -33,10 +33,14 @@ export function ChatWorkspace({ user, initialConversations }: { user: { name: st
     setInput("");
     setStreaming(true);
     const temporaryId = `user-${Date.now()}`;
-    setMessages((current) => [...current, { id: temporaryId, role: "user", content }, { id: `assistant-${Date.now()}`, role: "assistant", content: "" }]);
+    const placeholderId = `assistant-${Date.now()}`;
+    setMessages((current) => [...current, { id: temporaryId, role: "user", content }, { id: placeholderId, role: "assistant", content: "" }]);
     try {
       const response = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ conversationId: activeId, content }) });
-      if (!response.ok || !response.body) throw new Error((await response.json()).error ?? "Unable to send message.");
+      if (!response.ok || !response.body) {
+        const errorPayload = await response.json().catch(() => null);
+        throw new Error(errorPayload?.error ?? "Unable to send message.");
+      }
       const returnedId = response.headers.get("x-conversation-id");
       if (returnedId && returnedId !== activeId) {
         setActiveId(returnedId);
@@ -51,7 +55,14 @@ export function ChatWorkspace({ user, initialConversations }: { user: { name: st
         setMessages((current) => current.map((message, index) => index === current.length - 1 ? { ...message, content: message.content + text } : message));
       }
     } catch (error) {
-      setMessages((current) => [...current, { id: `error-${Date.now()}`, role: "assistant", content: error instanceof Error ? error.message : "Something went wrong." }]);
+      const message = error instanceof Error ? error.message : "Something went wrong.";
+      setMessages((current) => {
+        const lastMessage = current[current.length - 1];
+        if (lastMessage && lastMessage.role === "assistant" && !lastMessage.content.trim()) {
+          return [...current.slice(0, -1), { ...lastMessage, content: message }];
+        }
+        return [...current, { id: `error-${Date.now()}`, role: "assistant", content: message }];
+      });
     } finally {
       setStreaming(false);
     }
