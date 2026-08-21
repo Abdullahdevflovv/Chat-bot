@@ -1,6 +1,6 @@
 # Lumina
 
-Lumina is a production-oriented AI chat workspace built with Next.js 16, TypeScript, Auth.js credentials authentication, Prisma 7, PostgreSQL, and Groq streaming.
+Lumina is a bike-focused AI chat workspace built with Next.js 16, TypeScript, Auth.js credentials authentication, Prisma 7, PostgreSQL, and direct Groq streaming.
 
 ## Local setup
 
@@ -14,7 +14,11 @@ npx prisma migrate deploy
 npm run dev
 ```
 
-Open `http://localhost:3000`. Users register and sign in through the server-backed auth flow. Conversations and messages are stored in PostgreSQL; Groq requests only run on the server.
+Open `http://localhost:3000`. Users register and sign in through the server-backed auth flow. Conversations and messages are stored in PostgreSQL.
+
+## Custom bike guardrails
+
+The app now runs its own bike-product guardrails in the Next.js API route instead of relying on a separate NeMo service. The guardrail layer validates user input, blocks prompt-injection attempts, redacts sensitive keys, and keeps the assistant focused on bicycles, accessories, fit, maintenance, and safe rider guidance.
 
 ## Validation
 
